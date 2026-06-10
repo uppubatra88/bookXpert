@@ -70,6 +70,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -105,10 +106,11 @@ import com.bookxpert.upasnaprojectss.platform.rememberPlatformFilePicker
 import com.bookxpert.upasnaprojectss.presentation.ActiveFilter
 import com.bookxpert.upasnaprojectss.presentation.EmployeeViewModel
 import com.bookxpert.upasnaprojectss.presentation.SortOption
-import com.bookxpert.upasnaprojectss.resources.Res
 import com.bookxpert.upasnaprojectss.validation.validateEmployeeForm
 import org.koin.compose.koinInject
 import org.jetbrains.compose.resources.stringResource
+import upasnaemployeekmp.composeapp.generated.resources.Res
+import upasnaemployeekmp.composeapp.generated.resources.*
 
 private enum class Screen { Employees, TopEarners, Form, Detail }
 
@@ -261,7 +263,7 @@ private fun EmployeeListScreen(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 @Composable
 private fun EmployeeCard(employee: Employee, query: String, onOpen: (Employee) -> Unit, onEdit: (Employee) -> Unit, onDelete: (Employee) -> Unit) {
     var menuOpen by remember { mutableStateOf(false) }
@@ -392,7 +394,7 @@ private fun DetailSection(title: String, rows: List<Pair<String, String>>) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun EmployeeFormScreen(
     form: EmployeeFormState,
@@ -565,7 +567,7 @@ private fun ResumePicker(form: EmployeeFormState, onPick: () -> Unit, onRemove: 
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun FilterSheet(
     selectedDepartments: Set<Department>,
@@ -634,6 +636,7 @@ private fun EmptyState() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun <T> EnumDropdown(label: String, values: List<T>, selected: T?, labelOf: (T) -> String, error: String?, onSelected: (T) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
