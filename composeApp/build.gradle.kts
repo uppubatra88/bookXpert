@@ -34,6 +34,7 @@ kotlin {
             implementation(libs.koin.compose)
             implementation(libs.room.runtime)
             implementation(libs.sqlite.bundled)
+            implementation(compose.components.resources)
         }
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)

@@ -70,7 +70,6 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -106,8 +105,10 @@ import com.bookxpert.upasnaprojectss.platform.rememberPlatformFilePicker
 import com.bookxpert.upasnaprojectss.presentation.ActiveFilter
 import com.bookxpert.upasnaprojectss.presentation.EmployeeViewModel
 import com.bookxpert.upasnaprojectss.presentation.SortOption
+import com.bookxpert.upasnaprojectss.resources.Res
 import com.bookxpert.upasnaprojectss.validation.validateEmployeeForm
 import org.koin.compose.koinInject
+import org.jetbrains.compose.resources.stringResource
 
 private enum class Screen { Employees, TopEarners, Form, Detail }
 
@@ -121,10 +122,11 @@ fun App(viewModel: EmployeeViewModel = koinInject()) {
         var screen by remember { mutableStateOf(Screen.Employees) }
         var selectedEmployee by remember { mutableStateOf<Employee?>(null) }
         var showFilters by remember { mutableStateOf(false) }
+        val undoLabel = stringResource(Res.string.undo)
 
         LaunchedEffect(state.snackbarMessage) {
             state.snackbarMessage?.let {
-                val result = snackbarHost.showSnackbar(it, actionLabel = if (it.contains("Undo")) "Undo" else null)
+                val result = snackbarHost.showSnackbar(it, actionLabel = if (it.contains(undoLabel)) undoLabel else null)
                 if (result.name == "ActionPerformed") viewModel.undoDelete()
                 viewModel.showMessage(null)
             }
@@ -135,16 +137,16 @@ fun App(viewModel: EmployeeViewModel = koinInject()) {
             floatingActionButton = {
                 if (screen != Screen.Form && screen != Screen.Detail) {
                     FloatingActionButton(onClick = { viewModel.newEmployee(); screen = Screen.Form }) {
-                        Icon(Icons.Default.Add, contentDescription = "Add")
+                        Icon(Icons.Default.Add, contentDescription = stringResource(Res.string.add))
                     }
                 }
             },
             bottomBar = {
                 if (screen != Screen.Detail) {
                     NavigationBar {
-                        NavigationBarItem(selected = screen == Screen.Employees, onClick = { screen = Screen.Employees }, icon = { Icon(Icons.Default.Search, null) }, label = { Text(AppText.employeesTab) })
-                        NavigationBarItem(selected = screen == Screen.TopEarners, onClick = { screen = Screen.TopEarners }, icon = { Text("#") }, label = { Text(AppText.topTab) })
-                        NavigationBarItem(selected = screen == Screen.Form, onClick = { viewModel.newEmployee(); screen = Screen.Form }, icon = { Icon(Icons.Default.Edit, null) }, label = { Text(AppText.formTab) })
+                        NavigationBarItem(selected = screen == Screen.Employees, onClick = { screen = Screen.Employees }, icon = { Icon(Icons.Default.Search, null) }, label = { Text(stringResource(Res.string.employees_tab)) })
+                        NavigationBarItem(selected = screen == Screen.TopEarners, onClick = { screen = Screen.TopEarners }, icon = { Text("#") }, label = { Text(stringResource(Res.string.top_tab)) })
+                        NavigationBarItem(selected = screen == Screen.Form, onClick = { viewModel.newEmployee(); screen = Screen.Form }, icon = { Icon(Icons.Default.Edit, null) }, label = { Text(stringResource(Res.string.form_tab)) })
                     }
                 }
             }
@@ -223,21 +225,21 @@ private fun EmployeeListScreen(
 ) {
     var sortOpen by remember { mutableStateOf(false) }
     Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(AppText.employeeProfiles, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        Text(stringResource(Res.string.employee_profiles), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             OutlinedTextField(
                 value = state.searchQuery,
                 onValueChange = onSearch,
                 modifier = Modifier.weight(1f),
                 leadingIcon = { Icon(Icons.Default.Search, null) },
-                placeholder = { Text(AppText.searchPlaceholder) },
+                placeholder = { Text(stringResource(Res.string.search_placeholder)) },
                 singleLine = true
             )
             BadgedBox(badge = { if (state.filters.activeCount > 0) Badge { Text("${state.filters.activeCount}") } }) {
-                IconButton(onClick = onFilter) { Icon(Icons.Default.FilterList, AppText.filter) }
+                IconButton(onClick = onFilter) { Icon(Icons.Default.FilterList, stringResource(Res.string.filter)) }
             }
             Box {
-                IconButton(onClick = { sortOpen = true }) { Icon(Icons.Default.KeyboardArrowDown, AppText.sort) }
+                IconButton(onClick = { sortOpen = true }) { Icon(Icons.Default.KeyboardArrowDown, stringResource(Res.string.sort)) }
                 DropdownMenu(expanded = sortOpen, onDismissRequest = { sortOpen = false }) {
                     SortOption.entries.forEach {
                         DropdownMenuItem(text = { Text(it.label) }, onClick = { onSort(it); sortOpen = false })
@@ -259,7 +261,7 @@ private fun EmployeeListScreen(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun EmployeeCard(employee: Employee, query: String, onOpen: (Employee) -> Unit, onEdit: (Employee) -> Unit, onDelete: (Employee) -> Unit) {
     var menuOpen by remember { mutableStateOf(false) }
@@ -282,22 +284,22 @@ private fun EmployeeCard(employee: Employee, query: String, onOpen: (Employee) -
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 ElevatedAssistChip(onClick = {}, label = { Text(employee.department.label) })
                 AssistChip(onClick = {}, label = { Text(employee.employmentType.label) })
-                AssistChip(onClick = {}, label = { Text("₹${employee.salary.toInt()}") })
+                AssistChip(onClick = {}, label = { Text(stringResource(Res.string.salary_format, employee.salary.toInt())) })
                 AssistChip(onClick = {}, label = { Text(formatDate(employee.joiningDateMillis)) })
             }
         }
         DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-            DropdownMenuItem(text = { Text(AppText.edit) }, leadingIcon = { Icon(Icons.Default.Edit, null) }, onClick = { menuOpen = false; onEdit(employee) })
-            DropdownMenuItem(text = { Text(AppText.delete) }, leadingIcon = { Icon(Icons.Default.Delete, null) }, onClick = { menuOpen = false; confirmDelete = true })
+            DropdownMenuItem(text = { Text(stringResource(Res.string.edit)) }, leadingIcon = { Icon(Icons.Default.Edit, null) }, onClick = { menuOpen = false; onEdit(employee) })
+            DropdownMenuItem(text = { Text(stringResource(Res.string.delete)) }, leadingIcon = { Icon(Icons.Default.Delete, null) }, onClick = { menuOpen = false; confirmDelete = true })
         }
     }
     if (confirmDelete) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
-            title = { Text(AppText.deleteEmployeeTitle) },
-            text = { Text("${AppText.deleteEmployeePrefix} ${employee.fullName}. ${AppText.deleteEmployeeSuffix}") },
-            confirmButton = { TextButton(onClick = { confirmDelete = false; onDelete(employee) }) { Text(AppText.delete) } },
-            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(AppText.cancel) } }
+            title = { Text(stringResource(Res.string.delete_employee_title)) },
+            text = { Text(stringResource(Res.string.delete_employee_message, employee.fullName)) },
+            confirmButton = { TextButton(onClick = { confirmDelete = false; onDelete(employee) }) { Text(stringResource(Res.string.delete)) } },
+            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(stringResource(Res.string.cancel)) } }
         )
     }
 }
@@ -313,8 +315,8 @@ private fun EmployeeDetailScreen(
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, AppText.back) }
-                Text(AppText.employeeDetails, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, stringResource(Res.string.back)) }
+                Text(stringResource(Res.string.employee_details), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             }
         }
         item {
@@ -329,23 +331,23 @@ private fun EmployeeDetailScreen(
         }
         item {
             DetailSection(
-                title = AppText.workDetails,
+                title = stringResource(Res.string.work_details),
                 rows = listOf(
-                    AppText.department to employee.department.label,
-                    AppText.employmentType to employee.employmentType.label,
-                    AppText.joiningDate to formatDate(employee.joiningDateMillis),
-                    AppText.salary to "₹${employee.salary.toInt()}",
-                    AppText.skills to employee.skills.joinToString { it.label }
+                    stringResource(Res.string.department) to employee.department.label,
+                    stringResource(Res.string.employment_type) to employee.employmentType.label,
+                    stringResource(Res.string.joining_date) to formatDate(employee.joiningDateMillis),
+                    stringResource(Res.string.salary) to stringResource(Res.string.salary_format, employee.salary.toInt()),
+                    stringResource(Res.string.skills) to employee.skills.joinToString { it.label }
                 )
             )
         }
         item {
             DetailSection(
-                title = AppText.contactDetails,
+                title = stringResource(Res.string.contact_details),
                 rows = listOf(
-                    AppText.phoneNumber to employee.phone,
-                    AppText.address to employee.address,
-                    AppText.resumeDocument to (employee.resume?.name ?: AppText.noDocument)
+                    stringResource(Res.string.phone_number) to employee.phone,
+                    stringResource(Res.string.address) to employee.address,
+                    stringResource(Res.string.resume_document) to (employee.resume?.name ?: stringResource(Res.string.no_document))
                 )
             )
         }
@@ -354,12 +356,12 @@ private fun EmployeeDetailScreen(
                 Button(onClick = onEdit, modifier = Modifier.weight(1f)) {
                     Icon(Icons.Default.Edit, null)
                     Spacer(Modifier.width(8.dp))
-                    Text(AppText.edit)
+                    Text(stringResource(Res.string.edit))
                 }
                 TextButton(onClick = { confirmDelete = true }, modifier = Modifier.weight(1f)) {
                     Icon(Icons.Default.Delete, null)
                     Spacer(Modifier.width(8.dp))
-                    Text(AppText.delete)
+                    Text(stringResource(Res.string.delete))
                 }
             }
         }
@@ -367,10 +369,10 @@ private fun EmployeeDetailScreen(
     if (confirmDelete) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
-            title = { Text(AppText.deleteEmployeeTitle) },
-            text = { Text("${AppText.deleteEmployeePrefix} ${employee.fullName}. ${AppText.deleteEmployeeSuffix}") },
-            confirmButton = { TextButton(onClick = { confirmDelete = false; onDelete() }) { Text(AppText.delete) } },
-            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(AppText.cancel) } }
+            title = { Text(stringResource(Res.string.delete_employee_title)) },
+            text = { Text(stringResource(Res.string.delete_employee_message, employee.fullName)) },
+            confirmButton = { TextButton(onClick = { confirmDelete = false; onDelete() }) { Text(stringResource(Res.string.delete)) } },
+            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(stringResource(Res.string.cancel)) } }
         )
     }
 }
@@ -390,7 +392,7 @@ private fun DetailSection(title: String, rows: List<Pair<String, String>>) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun EmployeeFormScreen(
     form: EmployeeFormState,
@@ -421,8 +423,8 @@ private fun EmployeeFormScreen(
                     ) { Icon(Icons.Default.CameraAlt, null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(18.dp)) }
                 }
                 Column {
-                    Text(if (form.editingId == null) "Add Employee" else "Edit Employee", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                    Text("BookXpert profile details", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(if (form.editingId == null) stringResource(Res.string.add_employee) else stringResource(Res.string.edit_employee), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Text(stringResource(Res.string.bookxpert_profile_details), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -431,7 +433,7 @@ private fun EmployeeFormScreen(
                 value = form.fullName,
                 onValueChange = { value -> onChange { it.copy(fullName = value) } },
                 modifier = Modifier.fillMaxWidth().onFocusChanged { if (!it.isFocused) onTouch(FormField.FullName) },
-                label = { Text("Full name") },
+                label = { Text(stringResource(Res.string.full_name)) },
                 isError = FormField.FullName in form.touched && errors.fullName != null,
                 supportingText = { if (FormField.FullName in form.touched) errors.fullName?.let { Text(it) } },
                 singleLine = true
@@ -442,7 +444,7 @@ private fun EmployeeFormScreen(
                 value = form.email,
                 onValueChange = { value -> onChange { it.copy(email = value) } },
                 modifier = Modifier.fillMaxWidth().onFocusChanged { if (!it.isFocused) onTouch(FormField.Email) },
-                label = { Text("Email") },
+                label = { Text(stringResource(Res.string.email)) },
                 isError = FormField.Email in form.touched && errors.email != null,
                 supportingText = { if (FormField.Email in form.touched) errors.email?.let { Text(it) } },
                 keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Email),
@@ -454,7 +456,7 @@ private fun EmployeeFormScreen(
                 value = form.phone,
                 onValueChange = { value -> onChange { it.copy(phone = value.filter { c -> c.isDigit() || c in "+- ()" }) } },
                 modifier = Modifier.fillMaxWidth().onFocusChanged { if (!it.isFocused) onTouch(FormField.Phone) },
-                label = { Text("Phone number") },
+                label = { Text(stringResource(Res.string.phone_number_label)) },
                 isError = FormField.Phone in form.touched && errors.phone != null,
                 supportingText = { if (FormField.Phone in form.touched) errors.phone?.let { Text(it) } },
                 keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Phone),
@@ -466,16 +468,16 @@ private fun EmployeeFormScreen(
                 value = form.address,
                 onValueChange = { value -> onChange { it.copy(address = value) } },
                 modifier = Modifier.fillMaxWidth().onFocusChanged { if (!it.isFocused) onTouch(FormField.Address) },
-                label = { Text("Address") },
+                label = { Text(stringResource(Res.string.address)) },
                 minLines = 4,
                 isError = FormField.Address in form.touched && errors.address != null,
                 supportingText = { if (FormField.Address in form.touched) errors.address?.let { Text(it) } }
             )
         }
-        item { RadioRow("Gender", Gender.entries, form.gender, { it.label }, errors.gender) { onChange { state -> state.copy(gender = it) } } }
-        item { EnumDropdown("Department", Department.entries, form.department, { it.label }, errors.department) { value -> onChange { it.copy(department = value) } } }
+        item { RadioRow(stringResource(Res.string.gender), Gender.entries, form.gender, { it.label }, errors.gender) { onChange { state -> state.copy(gender = it) } } }
+        item { EnumDropdown(stringResource(Res.string.department), Department.entries, form.department, { it.label }, errors.department) { value -> onChange { it.copy(department = value) } } }
         item {
-            Text("Skills", fontWeight = FontWeight.SemiBold)
+            Text(stringResource(Res.string.skills), fontWeight = FontWeight.SemiBold)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Skill.entries.forEach { skill ->
                     FilterChip(selected = skill in form.skills, onClick = { onToggleSkill(skill) }, label = { Text(skill.label) })
@@ -483,10 +485,10 @@ private fun EmployeeFormScreen(
             }
             errors.skills?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
         }
-        item { EnumDropdown("Employment Type", EmploymentType.entries, form.employmentType, { it.label }, errors.employmentType) { value -> onChange { it.copy(employmentType = value) } } }
+        item { EnumDropdown(stringResource(Res.string.employment_type), EmploymentType.entries, form.employmentType, { it.label }, errors.employmentType) { value -> onChange { it.copy(employmentType = value) } } }
         item {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("Active", Modifier.weight(1f))
+                Text(stringResource(Res.string.active), Modifier.weight(1f))
                 Switch(checked = form.isActive, onCheckedChange = { checked -> onChange { it.copy(isActive = checked) } })
             }
         }
@@ -496,7 +498,7 @@ private fun EmployeeFormScreen(
                 onValueChange = {},
                 modifier = Modifier.fillMaxWidth(),
                 readOnly = true,
-                label = { Text("Joining Date") },
+                label = { Text(stringResource(Res.string.joining_date)) },
                 trailingIcon = { IconButton(onClick = { showDatePicker = true }) { Icon(Icons.Default.KeyboardArrowDown, null) } },
                 isError = errors.joiningDate != null,
                 supportingText = { errors.joiningDate?.let { Text(it) } }
@@ -507,7 +509,7 @@ private fun EmployeeFormScreen(
                 value = form.salary,
                 onValueChange = { value -> onChange { it.copy(salary = value.filter { c -> c.isDigit() || c == '.' }) } },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Salary") },
+                label = { Text(stringResource(Res.string.salary)) },
                 prefix = { Text("₹") },
                 isError = errors.salary != null,
                 supportingText = { errors.salary?.let { Text(it) } },
@@ -520,16 +522,16 @@ private fun EmployeeFormScreen(
         }
         item {
             Button(onClick = onSave, modifier = Modifier.fillMaxWidth().height(52.dp)) {
-                Text(if (form.editingId == null) "Submit Employee" else "Update Employee")
+                Text(if (form.editingId == null) stringResource(Res.string.submit_employee) else stringResource(Res.string.update_employee))
             }
         }
     }
 
     if (showImageSheet) {
         ModalBottomSheet(onDismissRequest = { showImageSheet = false }, sheetState = rememberModalBottomSheetState()) {
-            Text("Profile image", Modifier.padding(horizontal = 20.dp), style = MaterialTheme.typography.titleMedium)
-            DropdownMenuItem(text = { Text("Take Photo") }, leadingIcon = { Icon(Icons.Default.CameraAlt, null) }, onClick = { showImageSheet = false; picker.takePhoto() })
-            DropdownMenuItem(text = { Text("Choose from Gallery") }, leadingIcon = { Icon(Icons.Default.Image, null) }, onClick = { showImageSheet = false; picker.chooseFromGallery() })
+            Text(stringResource(Res.string.profile_image), Modifier.padding(horizontal = 20.dp), style = MaterialTheme.typography.titleMedium)
+            DropdownMenuItem(text = { Text(stringResource(Res.string.take_photo)) }, leadingIcon = { Icon(Icons.Default.CameraAlt, null) }, onClick = { showImageSheet = false; picker.takePhoto() })
+            DropdownMenuItem(text = { Text(stringResource(Res.string.choose_gallery)) }, leadingIcon = { Icon(Icons.Default.Image, null) }, onClick = { showImageSheet = false; picker.chooseFromGallery() })
             Spacer(Modifier.height(20.dp))
         }
     }
@@ -542,9 +544,9 @@ private fun EmployeeFormScreen(
                 TextButton(onClick = {
                     dateState.selectedDateMillis?.let { value -> onChange { it.copy(joiningDateMillis = value) } }
                     showDatePicker = false
-                }) { Text("OK") }
+                }) { Text(stringResource(Res.string.ok)) }
             },
-            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Cancel") } }
+            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text(stringResource(Res.string.cancel)) } }
         ) { DatePicker(dateState) }
     }
 }
@@ -555,15 +557,15 @@ private fun ResumePicker(form: EmployeeFormState, onPick: () -> Unit, onRemove: 
         Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Icon(Icons.Default.AttachFile, null)
             Column(Modifier.weight(1f)) {
-                Text(form.resume?.name ?: "Resume document", fontWeight = FontWeight.SemiBold)
-                Text(form.resume?.let { "${it.mimeType} • ${it.sizeLabel}" } ?: "PDF, DOC, DOCX up to 5 MB", style = MaterialTheme.typography.bodySmall)
+                Text(form.resume?.name ?: stringResource(Res.string.resume_document_label), fontWeight = FontWeight.SemiBold)
+                Text(form.resume?.let { stringResource(Res.string.document_meta_format, it.mimeType, it.sizeLabel) } ?: stringResource(Res.string.resume_hint), style = MaterialTheme.typography.bodySmall)
             }
-            if (form.resume == null) TextButton(onClick = onPick) { Text("Select") } else IconButton(onClick = onRemove) { Icon(Icons.Default.Close, null) }
+            if (form.resume == null) TextButton(onClick = onPick) { Text(stringResource(Res.string.select)) } else IconButton(onClick = onRemove) { Icon(Icons.Default.Close, null) }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FilterSheet(
     selectedDepartments: Set<Department>,
@@ -577,20 +579,20 @@ private fun FilterSheet(
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(Modifier.padding(20.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Text("Filters", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            Text("Department", fontWeight = FontWeight.SemiBold)
+            Text(stringResource(Res.string.filters), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text(stringResource(Res.string.department), fontWeight = FontWeight.SemiBold)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Department.entries.forEach { FilterChip(selected = it in selectedDepartments, onClick = { onDepartment(it) }, label = { Text(it.label) }) }
             }
-            Text("Status", fontWeight = FontWeight.SemiBold)
+            Text(stringResource(Res.string.status), fontWeight = FontWeight.SemiBold)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 ActiveFilter.entries.forEach { FilterChip(selected = activeFilter == it, onClick = { onActive(it) }, label = { Text(it.label) }) }
             }
-            Text("Employment", fontWeight = FontWeight.SemiBold)
+            Text(stringResource(Res.string.employment), fontWeight = FontWeight.SemiBold)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 EmploymentType.entries.forEach { FilterChip(selected = it in selectedTypes, onClick = { onType(it) }, label = { Text(it.label) }) }
             }
-            Button(onClick = onClear, modifier = Modifier.fillMaxWidth()) { Text("Clear All Filters") }
+            Button(onClick = onClear, modifier = Modifier.fillMaxWidth()) { Text(stringResource(Res.string.clear_all_filters)) }
             Spacer(Modifier.height(24.dp))
         }
     }
@@ -599,22 +601,22 @@ private fun FilterSheet(
 @Composable
 private fun TopEarnersScreen(topEarners: List<Employee>, topN: Int, onTopN: (Int) -> Unit) {
     Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Top Earners", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        Text(stringResource(Res.string.top_earners), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             IconButton(onClick = { onTopN(topN - 1) }) { Icon(Icons.Default.Remove, null) }
-            Text("Top $topN", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(Res.string.top_count, topN), style = MaterialTheme.typography.titleMedium)
             IconButton(onClick = { onTopN(topN + 1) }) { Icon(Icons.Default.Add, null) }
         }
         LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             items(topEarners) { employee ->
                 Card(shape = RoundedCornerShape(8.dp)) {
                     Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text("#${topEarners.indexOf(employee) + 1}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                        Text(stringResource(Res.string.rank_format, topEarners.indexOf(employee) + 1), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                         Column(Modifier.weight(1f)) {
                             Text(employee.fullName, fontWeight = FontWeight.SemiBold)
                             Text(employee.department.label, style = MaterialTheme.typography.bodySmall)
                         }
-                        Text("₹${employee.salary.toInt()}", fontWeight = FontWeight.Bold)
+                        Text(stringResource(Res.string.salary_format, employee.salary.toInt()), fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -626,13 +628,12 @@ private fun TopEarnersScreen(topEarners: List<Employee>, topN: Int, onTopN: (Int
 private fun EmptyState() {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("No employees found", style = MaterialTheme.typography.titleMedium)
-            Text("Try a different search or filter", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(Res.string.no_employees_found), style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(Res.string.empty_search_hint), color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun <T> EnumDropdown(label: String, values: List<T>, selected: T?, labelOf: (T) -> String, error: String?, onSelected: (T) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
@@ -674,7 +675,7 @@ private fun <T> RadioRow(title: String, values: List<T>, selected: T?, labelOf: 
 private fun StatusDot(active: Boolean) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         Box(Modifier.size(10.dp).clip(CircleShape).background(if (active) Color(0xFF2E7D32) else Color(0xFFC62828)))
-        Text(if (active) "Active" else "Inactive", style = MaterialTheme.typography.bodySmall)
+        Text(if (active) stringResource(Res.string.active_status) else stringResource(Res.string.inactive_status), style = MaterialTheme.typography.bodySmall)
     }
 }
 
@@ -710,32 +711,3 @@ private fun darkAppColors() = androidx.compose.material3.darkColorScheme(
     surface = Color(0xFF171D19),
     secondaryContainer = Color(0xFF26372F)
 )
-
-private object AppText {
-    const val employeesTab = "Employees"
-    const val topTab = "Top"
-    const val formTab = "Form"
-    const val employeeProfiles = "Employee Profiles"
-    const val searchPlaceholder = "Search name, email, department"
-    const val filter = "Filter"
-    const val sort = "Sort"
-    const val edit = "Edit"
-    const val delete = "Delete"
-    const val cancel = "Cancel"
-    const val back = "Back"
-    const val employeeDetails = "Employee Details"
-    const val workDetails = "Work Details"
-    const val contactDetails = "Contact Details"
-    const val department = "Department"
-    const val employmentType = "Employment Type"
-    const val joiningDate = "Joining Date"
-    const val salary = "Salary"
-    const val skills = "Skills"
-    const val phoneNumber = "Phone Number"
-    const val address = "Address"
-    const val resumeDocument = "Resume Document"
-    const val noDocument = "No document selected"
-    const val deleteEmployeeTitle = "Delete employee?"
-    const val deleteEmployeePrefix = "This removes"
-    const val deleteEmployeeSuffix = "You can undo from the snackbar."
-}
